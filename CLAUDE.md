@@ -17,5 +17,5 @@ No test suite or linter is configured yet.
 
 ## Architecture
 - All app code is in `main.py` at the repo root: a module-level `Groq` client and a single `POST /ask` endpoint (`{"message"}` → `{"reply"}`) that makes one non-streaming chat completion call.
-- Config comes from env vars loaded via `python-dotenv` from `.env`: `GROQ_API_KEY` (required), `GROQ_MODEL` (default `llama-3.3-70b-versatile`).
+- Config comes from env vars loaded via `python-dotenv` from `.env`: `GROQ_API_KEY` (required), `GROQ_MODEL` (default `openai/gpt-oss-120b`). `GROQ_API_KEY` is also exported in the user's `~/.zshrc`, so `.env` is optional locally; `load_dotenv` does not override existing env vars.
 - `src/groq_llm/__init__.py` and the `groq-llm` script in `pyproject.toml` are leftover `uv init` scaffolding (hello-world stub), not the service. Uvicorn targets `main:app`, not the package.
