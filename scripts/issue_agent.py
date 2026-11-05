@@ -18,7 +18,8 @@ ROOT = Path.cwd().resolve()
 SKIP = {"uv.lock", ".mcp.json"}
 # Never sent to the model or written by it. .claude/ and scripts/ are skipped to
 # keep the prompt small enough for Groq's free tier (~8k tokens/min).
-PROTECTED = (".github/", ".git/", ".env", ".claude/", "scripts/")
+PROTECTED = (".github/", ".git/", ".claude/", "scripts/")
+ENV_TEMPLATE = ".env.example"  # the only env file the agent may read or edit (no secrets in it)
 MAX_BYTES = 20_000
 FILE_RE = re.compile(r"<<<FILE (.+?)>>>\n(.*?)\n?<<<END>>>", re.DOTALL)
 EDIT_RE = re.compile(r"<<<EDIT (.+?)>>>\n<<<OLD>>>\n(.*?)\n<<<NEW>>>\n(.*?)\n?<<<END>>>", re.DOTALL)
@@ -47,6 +48,12 @@ Follow the conventions in CLAUDE.md. Keep the change minimal.
 If the issue is too unclear to implement, reply with only: QUESTION: <what you need to know>"""
 
 
+def is_protected(p: str) -> bool:
+    name = Path(p).name
+    is_secret_env = (name == ".env" or name.startswith(".env.")) and name != ENV_TEMPLATE
+    return p.startswith(PROTECTED) or is_secret_env
+
+
 def repo_files() -> dict[str, str]:
     paths = subprocess.run(
         ["git", "ls-files"], capture_output=True, text=True, check=True
@@ -54,7 +61,7 @@ def repo_files() -> dict[str, str]:
     files = {}
     for p in paths:
         path = ROOT / p
-        if p in SKIP or p.startswith(PROTECTED) or path.stat().st_size > MAX_BYTES:
+        if p in SKIP or is_protected(p) or path.stat().st_size > MAX_BYTES:
             continue
         try:
             files[p] = path.read_text()
@@ -65,7 +72,7 @@ def repo_files() -> dict[str, str]:
 
 def safe_path(p: str) -> Path:
     path = (ROOT / p).resolve()
-    if not path.is_relative_to(ROOT) or p.startswith(PROTECTED):
+    if not path.is_relative_to(ROOT) or is_protected(p):
         raise ValueError(f"Refusing to write {p}")
     return path
 
