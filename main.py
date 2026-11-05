@@ -10,6 +10,10 @@ app = FastAPI()
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
 
+# Include books router
+from books import router as books_router
+app.include_router(books_router)
+
 
 class Ask(BaseModel):
     message: str
