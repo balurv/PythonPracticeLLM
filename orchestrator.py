@@ -26,13 +26,14 @@ MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
 MEMORY_TURNS = 6
 MEMORY_CHARS = 1500  # per remembered message; long old replies would blow Groq's free-tier TPM cap
 
-Mechanism = Literal["rag", "memory", "github"]
+Mechanism = Literal["rag", "memory", "github", "gmail_inbox_reader"]
 
 # Every tool an agent can be given. A capability not listed here gets a GitHub issue instead.
 CAPABILITIES = {
     "rag": "search knowledge text the user pasted for this agent",
     "memory": "remember earlier messages in this conversation",
     "github": "GitHub: read the user's profile, list/read/create issues, comment, list pull requests, read repo files",
+    "gmail_inbox_reader": "Read a user's Gmail inbox, extract receipt and expense details for analysis",
 }
 CATALOG = "\n".join(f"- {k}: {v}" for k, v in CAPABILITIES.items())
 
