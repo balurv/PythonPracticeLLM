@@ -12,3 +12,4 @@ wheels/
 
 # Frontend
 node_modules/
+gmail_token.json

@@ -15,6 +15,7 @@ from groq import Groq
 from pydantic import BaseModel, Field
 
 import db
+import gmail_tool
 import mcp_client
 import tool_issues
 import vectors
@@ -26,13 +27,14 @@ MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
 MEMORY_TURNS = 6
 MEMORY_CHARS = 1500  # per remembered message; long old replies would blow Groq's free-tier TPM cap
 
-Mechanism = Literal["rag", "memory", "github"]
+Mechanism = Literal["rag", "memory", "github", "gmail"]
 
 # Every tool an agent can be given. A capability not listed here gets a GitHub issue instead.
 CAPABILITIES = {
     "rag": "search knowledge text the user pasted for this agent",
     "memory": "remember earlier messages in this conversation",
     "github": "GitHub: read the user's profile, list/read/create issues, comment, list pull requests, read repo files",
+    "gmail": "Gmail, read-only: search the user's inbox and read emails (receipts, bookings...); cannot send or delete",
 }
 CATALOG = "\n".join(f"- {k}: {v}" for k, v in CAPABILITIES.items())
 
@@ -65,7 +67,8 @@ scripts, setup guides or API instructions for it, even if the user asks for code
 Tool and capability requests must always go through `request_tool`, never through GitHub tools like
 `issue_write` (those are only for the user's own GitHub tasks).
 Then reply briefly that the capability isn't available yet and share the issue link it returns.
-If the tool is already listed under "Requested tools", just share that link. You may still help with
+Always use "Your tools" first. If one of them returns an error, tell the user the error; don't file a
+request for a tool you already have. If a capability is only listed under "Requested tools", share that link. You may still help with
 any part that needs no new tool."""
 
 REMINDER = (
@@ -241,7 +244,7 @@ def _chat(agent_id: int, message: str) -> str:
     if agent["requirements"]:
         system += f"\nRequirements: {agent['requirements']}"
     if agent["tool_requests"]:
-        system += "\nRequested tools (not available yet):\n" + "\n".join(
+        system += "\nRequested tools (filed earlier; if one of Your tools now covers it, use that tool instead):\n" + "\n".join(
             f"- {t['name']}: {t['issue_url']}" for t in agent["tool_requests"]
         )
     if "rag" in mech and (chunks := vectors.search_knowledge(agent_id, message)):
@@ -263,6 +266,8 @@ def _chat(agent_id: int, message: str) -> str:
         )
 
     local_tools = {"request_tool": (REQUEST_TOOL_SPEC, request_tool)}
+    if "gmail" in mech:
+        local_tools |= gmail_tool.TOOLS
     reply = asyncio.run(mcp_client.ask_with_tools(messages, local_tools, github="github" in mech))
 
     if "memory" in mech:
