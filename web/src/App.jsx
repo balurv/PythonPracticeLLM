@@ -4,6 +4,7 @@ const MECHANISMS = [
   { id: "rag", label: "RAG knowledge (Qdrant)" },
   { id: "memory", label: "Conversation memory (MySQL)" },
   { id: "github", label: "GitHub tools (MCP)" },
+  { id: "gmail", label: "Gmail inbox, read-only" },
 ];
 
 async function api(path, body) {

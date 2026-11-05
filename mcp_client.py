@@ -91,7 +91,10 @@ async def run(session: ClientSession | None, messages: list[dict], local_tools: 
             name, args = tc.function.name, json.loads(tc.function.arguments or "{}")
             print(f"-> {name}({tc.function.arguments})", file=sys.stderr)
             if name in local_tools:
-                text = local_tools[name][1](**args)
+                try:
+                    text = local_tools[name][1](**args)
+                except Exception as e:  # e.g. Gmail not connected: tell the model, don't crash the chat
+                    text = f"Tool error: {e}"
             elif session:
                 result = await session.call_tool(name, args)
                 text = "\n".join(c.text for c in result.content if c.type == "text")
