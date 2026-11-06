@@ -1,35 +1,27 @@
 """MCP client: lets the Groq LLM use the GitHub MCP server's tools.
 
-Usage: uv run python mcp_client.py "list open issues in balurv/PythonPracticeLLM"
+Usage: uv run python -m backend.integrations.mcp_client "list open issues in balurv/PythonPracticeLLM"
 Env: GROQ_API_KEY, GITHUB_PAT, optional GROQ_MODEL.
 """
 
 import asyncio
 import json
-import os
 import sys
 from collections.abc import Callable
 
 import groq
-from dotenv import load_dotenv
 from groq import Groq
 from mcp import ClientSession
 from mcp.client.streamable_http import streamable_http_client
 from mcp.shared._httpx_utils import create_mcp_http_client
 
-load_dotenv()
+from backend import config
+
 URL = "https://api.githubcopilot.com/mcp/"
-MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
+MODEL = config.GROQ_MODEL
 MAX_STEPS = 10
 MAX_TOOL_CHARS = 4000  # trim big tool results (file contents, issue lists) to stay under Groq's TPM cap
-# Groq's free tier allows ~8k tokens/min, so only expose a few tools to the LLM.
-TOOLS = set(
-    os.getenv(
-        "MCP_TOOLS",
-        "get_me,list_issues,issue_read,issue_write,add_issue_comment,"
-        "list_pull_requests,get_file_contents",
-    ).split(",")
-)
+TOOLS = config.MCP_TOOLS  # allowlist; see config.py
 
 
 LocalTools = dict[str, tuple[dict, Callable[..., str]]]  # name -> (function spec, python fn)
@@ -68,7 +60,7 @@ async def run(session: ClientSession | None, messages: list[dict], local_tools: 
             for t in (await session.list_tools()).tools
             if t.name in TOOLS
         ]
-    client = Groq(timeout=60)
+    client = Groq(api_key=config.GROQ_API_KEY, timeout=config.GROQ_TIMEOUT)
     messages = list(messages)
 
     for _ in range(MAX_STEPS):
@@ -110,7 +102,7 @@ async def ask_with_tools(messages: list[dict], local_tools: LocalTools | None = 
     """Answer `messages` with local tools, plus GitHub MCP tools when `github` is on."""
     if not github:
         return await run(None, messages, local_tools)
-    headers = {"Authorization": f"Bearer {os.environ['GITHUB_PAT']}"}
+    headers = {"Authorization": f"Bearer {config.github_pat()}"}
     async with (
         create_mcp_http_client(headers=headers) as http,
         streamable_http_client(URL, http_client=http) as (read, write),

@@ -1,6 +1,5 @@
 """Qdrant vector store with Gemini embeddings: agent profiles and agent knowledge."""
 
-import os
 import uuid
 
 from google import genai
@@ -8,19 +7,21 @@ from google.genai import types
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, FieldCondition, Filter, MatchValue, PointStruct, VectorParams
 
-EMBED_MODEL = os.getenv("GEMINI_EMBED_MODEL", "gemini-embedding-001")
+from backend import config
+
+EMBED_MODEL = config.GEMINI_EMBED_MODEL
 DIM = 768
 AGENTS, KNOWLEDGE = "agents", "knowledge"
 CHUNK = 500
 
-qdrant = QdrantClient(url=os.getenv("QDRANT_URL", "http://localhost:6333"))
+qdrant = QdrantClient(url=config.QDRANT_URL)
 _gemini: genai.Client | None = None
 
 
 def embed(texts: list[str], task: str) -> list[list[float]]:
     """task: RETRIEVAL_DOCUMENT for stored text, RETRIEVAL_QUERY for searches."""
     global _gemini
-    _gemini = _gemini or genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+    _gemini = _gemini or genai.Client(api_key=config.GEMINI_API_KEY)
     res = _gemini.models.embed_content(
         model=EMBED_MODEL,
         contents=texts,

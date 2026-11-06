@@ -3,18 +3,18 @@
 The dev team picks these up, builds and tests the tool, then adds it as a mechanism.
 """
 
-import os
-
 import httpx
 
-REPO = os.getenv("GITHUB_REPO", "balurv/PythonPracticeLLM")
+from backend import config
+
+REPO = config.GITHUB_REPO
 LABEL = "tool-request"
 API = f"https://api.github.com/repos/{REPO}/issues"
 
 
 def _headers() -> dict:
     return {
-        "Authorization": f"Bearer {os.environ['GITHUB_PAT']}",
+        "Authorization": f"Bearer {config.github_pat()}",
         "Accept": "application/vnd.github+json",
     }
 
@@ -49,7 +49,7 @@ Agent **#{agent['id']} {agent['name']}**. Its requirements:
 {bullets(tool.get('acceptance_criteria', []))}
 
 ## Implementation notes
-- Expose it as a new agent mechanism, like `github` in `orchestrator.py` (function tools for the Groq tool loop).
+- Expose it as a new agent mechanism, like `gmail` (`backend/integrations/gmail.py`, wired in `backend/services/chat_service.py`) (function tools for the Groq tool loop).
 - Read credentials from env vars (`.env` / `~/.zshrc`), never from the database or code. Add them to `.env.example`.
 - Prefer read-only access; keep tool results small (Groq free tier is ~8k tokens/min).
 {bullets(tool.get('security_notes', []))}
