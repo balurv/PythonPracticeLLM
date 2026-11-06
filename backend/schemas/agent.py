@@ -3,7 +3,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 # Agent tools. Keep in sync with CAPABILITIES in services/prompts.py and the frontend's constants/mechanisms.js.
-Mechanism = Literal["rag", "memory", "github", "gmail"]
+Mechanism = Literal["rag", "memory", "github", "gmail", "maps", "fitness"]
 
 
 class AgentRequest(BaseModel):

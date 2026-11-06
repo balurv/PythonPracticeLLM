@@ -10,6 +10,10 @@ CAPABILITIES = {
     "memory": "remember earlier messages in this conversation",
     "github": "GitHub: read the user's profile, list/read/create issues, comment, list pull requests, read repo files",
     "gmail": "Gmail, read-only: search the user's inbox and read emails (receipts, bookings...); cannot send or delete",
+    "maps": "maps (OpenStreetMap): find places and get walking/running, cycling or driving routes with "
+    "distance, time and elevation",
+    "fitness": "exercise coach: exercises, sets/reps and safety tips per muscle group (legs, core...) and "
+    "fitness level; general guidance, not medical advice",
 }
 CATALOG = "\n".join(f"- {k}: {v}" for k, v in CAPABILITIES.items())
 

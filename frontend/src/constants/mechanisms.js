@@ -5,4 +5,6 @@ export const MECHANISMS = [
   { id: "memory", label: "Conversation memory (MySQL)" },
   { id: "github", label: "GitHub tools (MCP)" },
   { id: "gmail", label: "Gmail inbox, read-only" },
+  { id: "maps", label: "Maps & routes (OpenStreetMap)" },
+  { id: "fitness", label: "Exercise coach" },
 ];
