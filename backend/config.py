@@ -44,6 +44,14 @@ GMAIL_CLIENT_SECRET = os.getenv("GMAIL_CLIENT_SECRET")
 GMAIL_TOKEN_FILE = os.getenv("GMAIL_TOKEN_FILE", "gmail_token.json")
 GMAIL_REDIRECT_URI = os.getenv("GMAIL_REDIRECT_URI", "http://localhost:8000/gmail/callback")
 
+# Maps (free, keyless OpenStreetMap services). Nominatim's usage policy requires an identifying
+# User-Agent and at most 1 request/second.
+MAPS_USER_AGENT = os.getenv("MAPS_USER_AGENT", "agent-hub/0.1 (+https://github.com/balurv/PythonPracticeLLM)")
+NOMINATIM_URL = os.getenv("NOMINATIM_URL", "https://nominatim.openstreetmap.org")
+OSRM_URL = os.getenv("OSRM_URL", "https://routing.openstreetmap.de")  # hosts routed-foot/-bike/-car
+ELEVATION_URL = os.getenv("ELEVATION_URL", "https://api.open-meteo.com/v1/elevation")
+MAPS_TIMEOUT = 15  # seconds per HTTP call
+
 
 def github_pat() -> str:
     """Read lazily so the app starts without it; only GitHub features need it."""

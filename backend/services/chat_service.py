@@ -1,7 +1,8 @@
 """Chat with an agent: build its system prompt and apply its mechanisms.
 
 Mechanisms: `rag` (top-3 Qdrant chunks in the system prompt), `memory` (last 6 MySQL messages,
-saved after each reply), `github` (GitHub MCP tools), `gmail` (read-only Gmail tools).
+saved after each reply), `github` (GitHub MCP tools), `gmail` (read-only Gmail tools),
+`maps` (places and routes), `fitness` (exercise plans).
 Every agent also gets the local `request_tool` function for capabilities it lacks.
 """
 
@@ -9,7 +10,7 @@ import asyncio
 
 from fastapi import HTTPException
 
-from backend.integrations import gmail, mcp_client
+from backend.integrations import fitness, gmail, maps, mcp_client
 from backend.repositories import agent_repository, message_repository, vector_repository
 from backend.services import llm_service
 from backend.services.prompts import CAPABILITIES, NO_TOOL_RULE, REMINDER, REQUEST_TOOL_SPEC
@@ -76,8 +77,9 @@ def _chat(agent_id: int, message: str) -> str:
         )
 
     local_tools = {"request_tool": (REQUEST_TOOL_SPEC, request_tool)}
-    if "gmail" in mech:
-        local_tools |= gmail.TOOLS
+    for name, module in (("gmail", gmail), ("maps", maps), ("fitness", fitness)):
+        if name in mech:
+            local_tools |= module.TOOLS
     reply = asyncio.run(mcp_client.ask_with_tools(messages, local_tools, github="github" in mech))
 
     if "memory" in mech:
